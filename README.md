@@ -15,10 +15,9 @@ git commit -m "feat: xxx" #添加功能
 #### 提交代码
 ```bash
 git branch master #切换回master分支
+git pull master # 更新master分支
 git merge yzk #合并分支，同理合并zhw,cy
 # 如果合并存在冲突，可以打开vscode解决
-git add .
-git commit -m "feat: xxx" #添加功能
 git push origin master #在远程仓库更新master
 ```
 
