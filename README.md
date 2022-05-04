@@ -1,17 +1,28 @@
 # MiniSQL
 
-### 协作指南
+### 协作指南*
 #### 初始化
 ```bash
 git clone git@github.com:Zerokei/minisql.git #下载代码
+git branch yzk #创建yzk分支(同理zhw,cy)
+git checkout yzk #切换至yzk分支
 ```
 #### 更新代码
 ```bash
 git add . #添加现有代码
 git commit -m "feat: xxx" #添加功能
-git push origin master #传输到远程
+```
+#### 提交代码
+```bash
+git branch master #切换回master分支
+git merge yzk #合并分支，同理合并zhw,cy
+# 如果合并存在冲突，可以打开vscode解决
+git add .
+git commit -m "feat: xxx" #添加功能
+git push origin master #在远程仓库更新master
 ```
 
+### 前言
 本框架参考CMU-15445 BusTub框架进行改写，在保留了缓冲池、索引、记录模块的一些核心设计理念的基础上，做了一些修改和扩展，使之兼容于原MiniSQL实验指导的要求。
 以下列出了改动/扩展较大的几个地方：
 - 对Disk Manager模块进行改动，扩展了位图页、磁盘文件元数据页用于支持持久化数据页分配回收状态；
