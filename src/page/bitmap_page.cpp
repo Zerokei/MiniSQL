@@ -2,17 +2,31 @@
 
 template<size_t PageSize>
 bool BitmapPage<PageSize>::AllocatePage(uint32_t &page_offset) {
+  for(uint32_t i = 0; i < MAX_CHARS; ++i){
+    for(uint8_t j = 0; j < 8; ++j){
+      if(bytes[i] & (1<<j)) continue;
+      else {
+        bytes[i] |= (1<<j);
+        page_offset = i*8+j;
+        return true;
+      }
+    }
+  }
   return false;
 }
 
 template<size_t PageSize>
 bool BitmapPage<PageSize>::DeAllocatePage(uint32_t page_offset) {
+  if(bytes[page_offset/8] & (1<<(page_offset & 0x7))){
+    bytes[page_offset/8] ^= 1<<(page_offset & 0x7);
+    return true;
+  }
   return false;
 }
 
 template<size_t PageSize>
 bool BitmapPage<PageSize>::IsPageFree(uint32_t page_offset) const {
-  return false;
+  return (bytes[page_offset/8] & (1<<(page_offset & 0x7))) == 0;
 }
 
 template<size_t PageSize>
