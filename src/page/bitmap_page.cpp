@@ -8,6 +8,7 @@ bool BitmapPage<PageSize>::AllocatePage(uint32_t &page_offset) {
       else {
         bytes[i] |= (1<<j);
         page_offset = i*8+j;
+        page_allocated_++;
         return true;
       }
     }
@@ -19,6 +20,7 @@ template<size_t PageSize>
 bool BitmapPage<PageSize>::DeAllocatePage(uint32_t page_offset) {
   if(bytes[page_offset/8] & (1<<(page_offset & 0x7))){
     bytes[page_offset/8] ^= 1<<(page_offset & 0x7);
+    page_allocated_--;
     return true;
   }
   return false;

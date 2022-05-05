@@ -42,20 +42,74 @@ void DiskManager::WritePage(page_id_t logical_page_id, const char *page_data) {
 }
 
 page_id_t DiskManager::AllocatePage() {
-  ASSERT(false, "Not implemented yet.");
-  return INVALID_PAGE_ID;
+  
+  DiskFileMetaPage *meta_page = reinterpret_cast<DiskFileMetaPage *> (meta_data_);
+  for(uint32_t bitmap_id = 0; ; ++bitmap_id) {
+    if((bitmap_id + 1) * BITMAP_SIZE > MAX_VALID_PAGE_ID){
+      LOG(ERROR)<<"The DiskManager has been full";
+      return INVALID_PAGE_ID;
+    }
+    char page_data[PAGE_SIZE];
+    ReadPhysicalPage(1 + bitmap_id * (BITMAP_SIZE + 1), page_data);
+    BitmapPage<PAGE_SIZE> *bitmap_page = reinterpret_cast<BitmapPage<PAGE_SIZE> *> (page_data);
+    if(bitmap_id+1 > meta_page->num_extents_){
+      for(uint32_t bitmap_offset = 0; bitmap_offset < BITMAP_SIZE; ++bitmap_offset){
+        bitmap_page->DeAllocatePage(bitmap_offset);
+      }  
+    }
+    for(uint32_t bitmap_offset = 0; bitmap_offset < BITMAP_SIZE; ++bitmap_offset){
+      if(bitmap_page->IsPageFree(bitmap_offset)){
+        if(bitmap_page->AllocatePage(bitmap_offset)){
+          meta_page->num_allocated_pages_++;
+          if(bitmap_id+1 > meta_page->num_extents_){
+            meta_page->num_extents_++;
+            ASSERT(bitmap_id+1 == meta_page->num_extents_, "bitmap_id dismatch num_extents_");
+          }
+          meta_page->extent_used_page_[bitmap_id]++;
+          return bitmap_id * BITMAP_SIZE + bitmap_offset;
+        }else{
+          LOG(ERROR)<<"allocate page false!";
+        }
+      }
+    }
+  }
 }
 
 void DiskManager::DeAllocatePage(page_id_t logical_page_id) {
-  ASSERT(false, "Not implemented yet.");
+  if((size_t)logical_page_id >= MAX_VALID_PAGE_ID){
+    LOG(ERROR) << "The logical page id is too big";
+  }
+  DiskFileMetaPage *meta_page = reinterpret_cast<DiskFileMetaPage *> (meta_data_);
+  char page_data[PAGE_SIZE];
+  uint32_t bitmap_id = logical_page_id / BITMAP_SIZE;
+  ReadPhysicalPage(1 + bitmap_id * (BITMAP_SIZE + 1), page_data);
+  BitmapPage<PAGE_SIZE> *bitmap_page = reinterpret_cast<BitmapPage<PAGE_SIZE> *> (page_data);
+  page_id_t bitmap_offset = logical_page_id % BITMAP_SIZE; // skip the offset
+  if(!bitmap_page->IsPageFree(bitmap_offset)){
+    bitmap_page->DeAllocatePage(bitmap_offset);
+    WritePhysicalPage(bitmap_id, page_data);
+    meta_page->extent_used_page_[bitmap_id]--;
+    meta_page->num_allocated_pages_--;
+  }
+  else {
+    LOG(ERROR)<<"This Page has not been allocated!";
+  }
 }
 
 bool DiskManager::IsPageFree(page_id_t logical_page_id) {
-  return false;
+  if((size_t)logical_page_id >= MAX_VALID_PAGE_ID){
+    LOG(ERROR) << "The logical page id is too big";
+  }
+  char page_data[PAGE_SIZE];
+  uint32_t bitmap_id = logical_page_id / BITMAP_SIZE;
+  ReadPhysicalPage(1 + bitmap_id * (BITMAP_SIZE + 1), page_data);
+  BitmapPage<PAGE_SIZE> *bitmap_page = reinterpret_cast<BitmapPage<PAGE_SIZE> *> (page_data);
+  page_id_t bitmap_offset = logical_page_id % BITMAP_SIZE; // skip the offset
+  return bitmap_page->IsPageFree(bitmap_offset);
 }
 
 page_id_t DiskManager::MapPageId(page_id_t logical_page_id) {
-  return 0;
+  return logical_page_id/BITMAP_SIZE*(BITMAP_SIZE*1) + logical_page_id%BITMAP_SIZE + 2;
 }
 
 int DiskManager::GetFileSize(const std::string &file_name) {

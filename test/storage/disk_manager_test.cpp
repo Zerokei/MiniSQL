@@ -44,6 +44,7 @@ TEST(DiskManagerTest, FreePageAllocationTest/*DISABLED_FreePageAllocationTest*/)
     EXPECT_EQ(i / DiskManager::BITMAP_SIZE + 1, meta_page->GetExtentNums());
     EXPECT_EQ(i + 1, meta_page->GetAllocatedPages());
     EXPECT_EQ(i % DiskManager::BITMAP_SIZE + 1, meta_page->GetExtentUsedPage(i / DiskManager::BITMAP_SIZE));
+    return;
   }
   disk_mgr->DeAllocatePage(0);
   disk_mgr->DeAllocatePage(DiskManager::BITMAP_SIZE - 1);
