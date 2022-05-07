@@ -35,10 +35,14 @@ Page *BufferPoolManager::FetchPage(page_id_t page_id) {
     new_page_id = free_list_.front();
     free_list_.pop_front();
   }
-  replacer_->Unpin(new_page_id);
+  // replacer_->Unpin(new_page_id);
   page_table_[new_page_id] = new_frame_id;
+  
   pages_[new_page_id].page_id_ = new_frame_id;
+  pages_[new_page_id].pin_count_ = 0;
+  pages_[new_page_id].is_dirty_ = false;
   disk_manager_->ReadPage(new_frame_id, pages_[new_page_id].GetData());
+  
   return &pages_[new_page_id];
 }
 
@@ -57,10 +61,14 @@ Page *BufferPoolManager::NewPage(page_id_t &page_id) {
     free_list_.pop_front();
   }
   frame_id_t new_frame_id = AllocatePage();
-  // replacer_->Unpin(new_page_id);
   page_table_[new_page_id] = new_frame_id;
+  // replacer_->Unpin(new_page_id);
+  
   pages_[new_page_id].page_id_ = new_frame_id;
+  pages_[new_page_id].pin_count_ = 0;
+  pages_[new_page_id].is_dirty_ = false;
   memset(pages_[new_page_id].GetData(), 0, PAGE_SIZE);
+  
   page_id = new_frame_id;
   return &pages_[new_page_id];
 }
