@@ -45,14 +45,40 @@ bool BufferPoolManager::DeletePage(page_id_t page_id) {
   // 1.   If P does not exist, return true.
   // 2.   If P exists, but has a non-zero pin-count, return false. Someone is using the page.
   // 3.   Otherwise, P can be deleted. Remove P from the page table, reset its metadata and return it to the free list.
-  return false;
+  for(int i = 0; i < pool_size_; i++){
+    if(pages[i]->GetPageId() == page_id) {
+      if(pages[i]->GetPinCount() > 0) return false;
+      else {
+        DeallocatePage(page_table[i]);
+        page_table.erase(i);
+        memset(pages[i]->GetData(), 0, PAGE_SIZE);
+        free_list_.emplace_back(i);
+        return true;
+      }
+    }
+  }
+  // not exist
+  return true;
 }
 
 bool BufferPoolManager::UnpinPage(page_id_t page_id, bool is_dirty) {
+  
   return false;
 }
 
 bool BufferPoolManager::FlushPage(page_id_t page_id) {
+  for(int i = 0; i < pool_size_; i++){
+    if(pages[i]->GetPageId() == page_id) {
+      if(pages[i]->GetPinCount() > 0) return false;
+      else {
+        disk_manager_->WritePage(page_table[i]->GetPageId(), page_table[i]->GetData());
+        page_table.erase(i);
+        memset(pages[i]->GetData(), 0, PAGE_SIZE);
+        free_list_.emplace_back(i);
+        return true;
+      }
+    }
+  }
   return false;
 }
 

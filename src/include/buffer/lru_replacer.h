@@ -36,6 +36,9 @@ public:
   size_t Size() override;
 
 private:
+  int *Rank;
+  int counter; // used to record the number of replacable block
+  int num_pages_;
   // add your own private member variables here
 };
 
