@@ -60,12 +60,15 @@ page_id_t DiskManager::AllocatePage() {
     for(uint32_t bitmap_offset = 0; bitmap_offset < BITMAP_SIZE; ++bitmap_offset){
       if(bitmap_page->IsPageFree(bitmap_offset)){
         if(bitmap_page->AllocatePage(bitmap_offset)){
+          // printf("offset = %d\n", bitmap_offset);
           meta_page->num_allocated_pages_++;
           if(bitmap_id+1 > meta_page->num_extents_){
             meta_page->num_extents_++;
             ASSERT(bitmap_id+1 == meta_page->num_extents_, "bitmap_id dismatch num_extents_");
           }
           meta_page->extent_used_page_[bitmap_id]++;
+          // printf("::::%ld\n", bitmap_id * BITMAP_SIZE + bitmap_offset);
+          WritePhysicalPage(1 + bitmap_id * (BITMAP_SIZE + 1), page_data);
           return bitmap_id * BITMAP_SIZE + bitmap_offset;
         }else{
           LOG(ERROR)<<"allocate page false!";
