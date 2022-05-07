@@ -5,7 +5,7 @@
 BufferPoolManager::BufferPoolManager(size_t pool_size, DiskManager *disk_manager)
         : pool_size_(pool_size), disk_manager_(disk_manager) {
   pages_ = new Page[pool_size_];
-  replacer_ = new CLOCKReplacer(pool_size_);
+  replacer_ = new LRUReplacer(pool_size_);
   for (size_t i = 0; i < pool_size_; i++) {
     free_list_.emplace_back(i);
   }
@@ -37,6 +37,7 @@ Page *BufferPoolManager::FetchPage(page_id_t page_id) {
   }
   replacer_->Unpin(new_page_id);
   page_table_[new_page_id] = new_frame_id;
+  pages_[new_page_id].page_id_ = new_frame_id;
   disk_manager_->ReadPage(new_frame_id, pages_[new_page_id].GetData());
   return &pages_[new_page_id];
 }
@@ -58,6 +59,7 @@ Page *BufferPoolManager::NewPage(page_id_t &page_id) {
   frame_id_t new_frame_id = AllocatePage();
   // replacer_->Unpin(new_page_id);
   page_table_[new_page_id] = new_frame_id;
+  pages_[new_page_id].page_id_ = new_frame_id;
   memset(pages_[new_page_id].GetData(), 0, PAGE_SIZE);
   page_id = new_frame_id;
   return &pages_[new_page_id];
@@ -75,6 +77,7 @@ bool BufferPoolManager::DeletePage(page_id_t page_id) {
       else {
         DeallocatePage(page_table_[i]);
         page_table_.erase(i);
+        pages_[i].page_id_ = INVALID_PAGE_ID;
         memset(pages_[i].GetData(), 0, PAGE_SIZE);
         free_list_.emplace_back(i);
         return true;
@@ -89,6 +92,8 @@ bool BufferPoolManager::UnpinPage(page_id_t page_id, bool is_dirty) {
   for(int i = 0; i < (int)pool_size_; i++){
     if(page_table_.find(i) != page_table_.end() && page_table_[i] == page_id){
       replacer_->Unpin(page_table_[i]);
+      pages_[i].pin_count_--;
+      pages_[i].is_dirty_ |= is_dirty;
       return true;
     }
   }
@@ -102,6 +107,7 @@ bool BufferPoolManager::FlushPage(page_id_t page_id) {
       else {
         disk_manager_->WritePage(page_table_[i], pages_[i].GetData());
         memset(pages_[i].GetData(), 0, PAGE_SIZE);
+        pages_[i].is_dirty_ = false;
         free_list_.emplace_back(i);
         return true;
       }
