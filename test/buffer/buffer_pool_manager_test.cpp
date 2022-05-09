@@ -29,7 +29,6 @@ TEST(BufferPoolManagerTest, BinaryDataTest) {
   for (char &i : random_binary_data) {
     i = uniform_dist(rng);
   }
-
   // Insert terminal characters both in the middle and at end
   random_binary_data[PAGE_SIZE / 2] = '\0';
   random_binary_data[PAGE_SIZE - 1] = '\0';

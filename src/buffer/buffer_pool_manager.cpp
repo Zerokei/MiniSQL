@@ -1,6 +1,7 @@
 #include "buffer/buffer_pool_manager.h"
 #include "glog/logging.h"
 #include "page/bitmap_page.h"
+#include "gtest/gtest.h"
 
 BufferPoolManager::BufferPoolManager(size_t pool_size, DiskManager *disk_manager)
         : pool_size_(pool_size), disk_manager_(disk_manager) {
@@ -31,14 +32,14 @@ Page *BufferPoolManager::FetchPage(page_id_t page_id) {
   if(free_list_.empty()){
     if(replacer_->Victim(&new_page_id) == false)
       return nullptr;
-    else FlushPage(new_page_id);
+    else EXPECT_TRUE(FlushPage(new_page_id));
   }
   new_page_id = free_list_.front();
   free_list_.pop_front();
   page_table_[new_page_id] = new_frame_id;
   
   pages_[new_page_id].page_id_ = new_frame_id;
-  pages_[new_page_id].pin_count_ = 0;
+  pages_[new_page_id].pin_count_ = 1;
   pages_[new_page_id].is_dirty_ = false;
   disk_manager_->ReadPage(new_frame_id, pages_[new_page_id].GetData());
   
@@ -55,7 +56,9 @@ Page *BufferPoolManager::NewPage(page_id_t &page_id) {
   if(free_list_.empty()){
     if(replacer_->Victim(&new_page_id) == false)
       return nullptr;
-    else FlushPage(new_page_id);
+    else {
+      EXPECT_TRUE(FlushPage(new_page_id));
+    }
   }
   new_page_id = free_list_.front();
   free_list_.pop_front();
@@ -63,7 +66,7 @@ Page *BufferPoolManager::NewPage(page_id_t &page_id) {
   page_table_[new_page_id] = new_frame_id;
   
   pages_[new_page_id].page_id_ = new_frame_id;
-  pages_[new_page_id].pin_count_ = 0;
+  pages_[new_page_id].pin_count_ = 1;
   pages_[new_page_id].is_dirty_ = true;
   memset(pages_[new_page_id].GetData(), 0, PAGE_SIZE);
   
@@ -107,19 +110,14 @@ bool BufferPoolManager::UnpinPage(page_id_t page_id, bool is_dirty) {
 }
 
 bool BufferPoolManager::FlushPage(page_id_t page_id) {
-  for(int i = 0; i < (int)pool_size_; i++){
-    if(page_table_.find(i) != page_table_.end() && page_table_[i] == page_id) {
-      if(pages_[i].GetPinCount() > 0) return false;
-      else {
-        disk_manager_->WritePage(page_table_[i], pages_[i].GetData());
-        memset(pages_[i].GetData(), 0, PAGE_SIZE);
-        pages_[i].is_dirty_ = false;
-        free_list_.emplace_back(i);
-        return true;
-      }
-    }
+  if(pages_[page_id].GetPinCount() > 0) return false;
+  else {
+    disk_manager_->WritePage(page_table_[page_id], pages_[page_id].GetData());
+    memset(pages_[page_id].GetData(), 0, PAGE_SIZE);
+    pages_[page_id].is_dirty_ = false;
+    free_list_.emplace_back(page_id);
+    return true;
   }
-  return true;
 }
 
 page_id_t BufferPoolManager::AllocatePage() {
