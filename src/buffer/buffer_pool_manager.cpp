@@ -114,6 +114,7 @@ bool BufferPoolManager::DeletePage(page_id_t page_id) {
     page_table_.erase(page_id);
     pages_[frame_id].page_id_ = INVALID_PAGE_ID;
     pages_[frame_id].is_dirty_ = false;
+    pages_[frame_id].pin_count_ = 0;
     free_list_.emplace_back(frame_id);
     return true;
   }
