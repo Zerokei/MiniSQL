@@ -33,6 +33,7 @@ Page *BufferPoolManager::FetchPage(page_id_t page_id) {
   frame_id_t new_frame_id = 0;
 
   if(page_table_.find(new_page_id) != page_table_.end()){// in the buffer pool manager
+    pages_[page_table_[new_page_id]].pin_count_ = 1;
     return &pages_[page_table_[new_page_id]];
   }
   if(free_list_.empty()){
