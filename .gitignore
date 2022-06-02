@@ -1,8 +1,11 @@
 bin/
 build/
 dbfiles/
+thirdparty/
 datas/
 .vscode/
 .idea/
+.cache/
+.DS_Store
 cmake-build-debug/
 cmake-build-release/

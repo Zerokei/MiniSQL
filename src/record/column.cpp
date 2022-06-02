@@ -27,16 +27,48 @@ Column::Column(const Column *other) : name_(other->name_), type_(other->type_), 
                                       unique_(other->unique_) {}
 
 uint32_t Column::SerializeTo(char *buf) const {
-  // replace with your code here
-  return 0;
+  uint32_t ofs=0;
+  MACH_WRITE_UINT32(buf,COLUMN_MAGIC_NUM);
+  ofs+=sizeof(uint32_t);
+  MACH_WRITE_STRING(buf+ofs,name_);
+  ofs+=MACH_STR_SERIALIZED_SIZE(name_);
+  MACH_WRITE_TO(TypeId,buf+ofs,type_);
+  ofs+=sizeof(TypeId);
+  MACH_WRITE_UINT32(buf+ofs,len_);
+  ofs+=sizeof(uint32_t);
+  MACH_WRITE_UINT32(buf+ofs,table_ind_);
+  ofs+=sizeof(uint32_t);
+  MACH_WRITE_TO(bool,buf+ofs,nullable_);
+  ofs+=sizeof(bool);
+  MACH_WRITE_TO(bool,buf+ofs,unique_);
+  ofs+=sizeof(bool);
+  return ofs;
 }
 
 uint32_t Column::GetSerializedSize() const {
-  // replace with your code here
-  return 0;
+  return sizeof(Column);
+  //return sizeof(uint32_t)*3+sizeof(bool)*2+MACH_STR_SERIALIZED_SIZE(name_)+sizeof(TypeId);
 }
 
 uint32_t Column::DeserializeFrom(char *buf, Column *&column, MemHeap *heap) {
-  // replace with your code here
-  return 0;
+  uint32_t ofs=0;
+  uint32_t Magic=MACH_READ_UINT32(buf+ofs);
+  ofs+=sizeof(uint32_t);
+  ASSERT(Magic==COLUMN_MAGIC_NUM,"Serializing failed!");
+  uint32_t l = MACH_READ_UINT32(buf+ofs);
+  ofs+=sizeof(uint32_t);
+  std::string name="";
+  for(uint32_t i=ofs;i<ofs+l;i++)name+=buf[i],ofs++;
+  TypeId Id=MACH_READ_FROM(TypeId,buf+ofs);
+  ofs+=sizeof(TypeId);
+  uint32_t len=MACH_READ_UINT32(buf+ofs);
+  ofs+=sizeof(uint32_t);
+  uint32_t table_index=MACH_READ_UINT32(buf+ofs);
+  ofs+=sizeof(uint32_t);
+  bool Nullable=MACH_READ_FROM(bool,buf+ofs);
+  ofs+=sizeof(bool);
+  bool Unique=MACH_READ_FROM(bool,buf+ofs);
+  ofs+=sizeof(bool);
+  column=new(heap->Allocate(sizeof(Column)))Column(name,Id,len,table_index,Nullable,Unique);
+  return ofs;
 }
