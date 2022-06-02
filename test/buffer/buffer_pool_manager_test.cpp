@@ -35,7 +35,9 @@ TEST(BufferPoolManagerTest, BinaryDataTest) {
 
   // Scenario: Once we have a page, we should be able to read and write content.
   std::memcpy(page0->GetData(), random_binary_data, PAGE_SIZE);
+  printf("addr:%p\n", page0->GetData());
   EXPECT_EQ(0, std::memcmp(page0->GetData(), random_binary_data, PAGE_SIZE));
+  // printf("%s\n %s\n", page0->GetData(), random_binary_data);
 
   // Scenario: We should be able to create new pages until we fill up the buffer pool.
   for (size_t i = 1; i < buffer_pool_size; ++i) {
@@ -47,7 +49,6 @@ TEST(BufferPoolManagerTest, BinaryDataTest) {
   for (size_t i = buffer_pool_size; i < buffer_pool_size * 2; ++i) {
     EXPECT_EQ(nullptr, bpm->NewPage(page_id_temp));
   }
-
   // Scenario: After unpinning pages {0, 1, 2, 3, 4} we should be able to create 5 new pages
   for (int i = 0; i < 5; ++i) {
     EXPECT_EQ(true, bpm->UnpinPage(i, true));
@@ -61,6 +62,7 @@ TEST(BufferPoolManagerTest, BinaryDataTest) {
   // Scenario: We should be able to fetch the data we wrote a while ago.
   page0 = bpm->FetchPage(0);
   EXPECT_EQ(0, memcmp(page0->GetData(), random_binary_data, PAGE_SIZE));
+  printf("%s\n", page0->GetData());
   EXPECT_EQ(true, bpm->UnpinPage(0, true));
 
   // Shutdown the disk manager and remove the temporary file we created.
