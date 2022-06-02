@@ -46,7 +46,7 @@ uint32_t Column::SerializeTo(char *buf) const {
 }
 
 uint32_t Column::GetSerializedSize() const {
-  return sizeof(Column);
+  return sizeof(Column)+sizeof(uint32_t);
   //return sizeof(uint32_t)*3+sizeof(bool)*2+MACH_STR_SERIALIZED_SIZE(name_)+sizeof(TypeId);
 }
 

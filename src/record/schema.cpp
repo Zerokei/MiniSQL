@@ -35,7 +35,7 @@ uint32_t Schema::DeserializeFrom(char *buf, Schema *&schema, MemHeap *heap) {
     Vec.push_back(New);
     ofs+=Ofs;
   }
-  Schema Sch=Schema(Vec);
-  schema=&Sch;
+  void *Buf = heap->Allocate(sizeof(Schema));
+  schema=new(Buf) Schema(Vec);
   return ofs;
 }

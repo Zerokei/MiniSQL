@@ -1,4 +1,5 @@
 #include "record/row.h"
+#include "utils/mem_heap.h"
 
 uint32_t Row::SerializeTo(char *buf, Schema *schema) const {
   uint32_t ofs=0;
@@ -37,17 +38,18 @@ uint32_t Row::DeserializeFrom(char *buf, Schema *schema) {
   ofs+=sizeof(RowId);
   size_t n=MACH_READ_FROM(size_t,buf+ofs);
   ofs+=sizeof(size_t);
-  size_t cnt=(n+7/8);
+  size_t cnt=(n+7)/8;
   uint32_t Ofs=ofs;
   ofs+=cnt;
   unsigned char tmp=MACH_READ_FROM(unsigned char,buf+Ofs);
   size_t m=n>=8?8:n;
   GetFields().clear();
+  delete(heap_);
+  heap_=new SimpleMemHeap;
   for(size_t i=0;i<n;i++){
-    //Field *f=GetField(i);
-    bool flag=(tmp>>m)&1;
+    bool flag=(tmp>>(m-1))&1;
+    TypeId Id=schema->GetColumn(i)->GetType();
     if(flag){
-      TypeId Id=schema->GetColumn(i)->GetType();
       if(Id==TypeId::kTypeInt){
         int32_t v=MACH_READ_FROM(int32_t,buf+ofs);
         ofs+=sizeof(int32_t);
@@ -64,6 +66,9 @@ uint32_t Row::DeserializeFrom(char *buf, Schema *schema) {
         GetFields().push_back(ALLOC_P(heap_,Field)(TypeId::kTypeChar,buf+ofs,len,true));
         ofs+=len;
       }
+    }
+    else {
+      GetFields().push_back(ALLOC_P(heap_,Field)(Id));
     }
     if((i+1)%8==0){
       Ofs++;

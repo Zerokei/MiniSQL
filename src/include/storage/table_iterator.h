@@ -13,7 +13,6 @@ class TableIterator {
 
 public:
 
-
   explicit TableIterator(int32_t num)
     : now_page_(num){}
 
@@ -26,7 +25,7 @@ public:
   // you may define your own constructor based on your member variables
   explicit TableIterator();
 
-  explicit TableIterator(const TableIterator &other);
+   TableIterator(const TableIterator &other);
 
   virtual ~TableIterator();
 
