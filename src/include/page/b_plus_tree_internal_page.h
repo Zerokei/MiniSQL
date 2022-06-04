@@ -55,6 +55,8 @@ public:
   void MoveLastToFrontOf(BPlusTreeInternalPage *recipient, const KeyType &middle_key,
                          BufferPoolManager *buffer_pool_manager);
 
+  MappingType *GetData() {return array_;}
+  
 private:
   void CopyNFrom(MappingType *items, int size, BufferPoolManager *buffer_pool_manager);
 
