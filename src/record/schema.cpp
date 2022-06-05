@@ -15,8 +15,13 @@ uint32_t Schema::SerializeTo(char *buf) const {
 }
 
 uint32_t Schema::GetSerializedSize() const {
+  uint32_t ofs=8;
   uint32_t len=GetColumnCount();
-  return 8+len*sizeof(Column);
+  for(uint32_t i=0;i<len;i++){
+    uint32_t Ofs=GetColumn(i)->GetSerializedSize();
+    ofs+=Ofs;
+  }
+  return ofs;
 }
 
 uint32_t Schema::DeserializeFrom(char *buf, Schema *&schema, MemHeap *heap) {

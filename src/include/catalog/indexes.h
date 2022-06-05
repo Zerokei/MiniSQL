@@ -1,12 +1,16 @@
 #ifndef MINISQL_INDEXES_H
 #define MINISQL_INDEXES_H
 
+#include <_types/_uint32_t.h>
+#include <cmath>
 #include <memory>
 
 #include "catalog/table.h"
+#include "common/rowid.h"
 #include "index/generic_key.h"
 #include "index/b_plus_tree_index.h"
 #include "record/schema.h"
+#include "record/type_id.h"
 
 class IndexMetadata {
   friend class IndexInfo;
@@ -36,7 +40,11 @@ private:
   IndexMetadata() = delete;
 
   explicit IndexMetadata(const index_id_t index_id, const std::string &index_name,
-                         const table_id_t table_id, const std::vector<uint32_t> &key_map) {}
+                         const table_id_t table_id, const std::vector<uint32_t> &key_map) 
+                         :index_id_(index_id),
+                          index_name_(index_name),
+                          table_id_(table_id),
+                          key_map_(key_map){}
 
 private:
   static constexpr uint32_t INDEX_METADATA_MAGIC_NUM = 344528;
@@ -64,7 +72,11 @@ public:
     // Step1: init index metadata and table info
     // Step2: mapping index key to key schema
     // Step3: call CreateIndex to create the index
-    ASSERT(false, "Not Implemented yet.");
+    meta_data_=meta_data;
+    table_info_=table_info;
+    IndexSchema *key_schema=table_info->GetSchema()->ShallowCopySchema(table_info->GetSchema(), meta_data->key_map_, heap_);
+    key_schema_=key_schema;
+    index_=CreateIndex(buffer_pool_manager);
   }
 
   inline Index *GetIndex() { return index_; }
@@ -82,8 +94,53 @@ private:
                          key_schema_{nullptr}, heap_(new SimpleMemHeap()) {}
 
   Index *CreateIndex(BufferPoolManager *buffer_pool_manager) {
-    ASSERT(false, "Not Implemented yet.");
-    return nullptr;
+    uint32_t ofs=sizeof(RowId)+sizeof(size_t);
+    size_t n=key_schema_->GetColumnCount();
+    ofs+=(n+7)/8;
+    for(size_t i=0;i<n;i++){
+      TypeId Type=key_schema_->GetColumn(i)->GetType();
+      if(Type==kTypeInt)ofs+=sizeof(int32_t);
+      else if(Type==kTypeFloat)ofs+=sizeof(float_t);
+      else ofs+=sizeof(uint32_t)+key_schema_->GetColumn(i)->GetLength();
+    }
+    void *buf=nullptr;
+    if(ofs<=4){ 
+      buf=heap_->Allocate(sizeof(BPlusTreeIndex<GenericKey<4>, RowId, GenericComparator<4>>));
+      BPlusTreeIndex<GenericKey<4>, RowId, GenericComparator<4>> * B_index=
+        new(buf)BPlusTreeIndex<GenericKey<4>, RowId, GenericComparator<4>>(meta_data_->index_id_,key_schema_,buffer_pool_manager);
+        return B_index;
+    }
+    if(ofs<=8){ 
+      buf=heap_->Allocate(sizeof(BPlusTreeIndex<GenericKey<8>, RowId, GenericComparator<8>>));
+      BPlusTreeIndex<GenericKey<8>, RowId, GenericComparator<8>> * B_index=
+        new(buf)BPlusTreeIndex<GenericKey<8>, RowId, GenericComparator<8>>(meta_data_->index_id_,key_schema_,buffer_pool_manager);
+        return B_index;
+    }    
+    if(ofs<=16){ 
+      buf=heap_->Allocate(sizeof(BPlusTreeIndex<GenericKey<16>, RowId, GenericComparator<16>>));
+      BPlusTreeIndex<GenericKey<16>, RowId, GenericComparator<16>> * B_index=
+        new(buf)BPlusTreeIndex<GenericKey<16>, RowId, GenericComparator<16>>(meta_data_->index_id_,key_schema_,buffer_pool_manager);
+        return B_index;
+    }
+    if(ofs<=32){ 
+      buf=heap_->Allocate(sizeof(BPlusTreeIndex<GenericKey<32>, RowId, GenericComparator<32>>));
+      BPlusTreeIndex<GenericKey<32>, RowId, GenericComparator<32>> * B_index=
+        new(buf)BPlusTreeIndex<GenericKey<32>, RowId, GenericComparator<32>>(meta_data_->index_id_,key_schema_,buffer_pool_manager);
+        return B_index;
+    }
+    if(ofs<=64){ 
+      buf=heap_->Allocate(sizeof(BPlusTreeIndex<GenericKey<64>, RowId, GenericComparator<64>>));
+      BPlusTreeIndex<GenericKey<64>, RowId, GenericComparator<64>> * B_index=
+        new(buf)BPlusTreeIndex<GenericKey<64>, RowId, GenericComparator<64>>(meta_data_->index_id_,key_schema_,buffer_pool_manager);
+        return B_index;
+    }
+    /*if(ofs<=128){
+      buf=heap_->Allocate(sizeof(BPlusTreeIndex<GenericKey<128>, RowId, GenericComparator<128>>));
+      BPlusTreeIndex<GenericKey<128>, RowId, GenericComparator<128>> * B_index=
+        new(buf)BPlusTreeIndex<GenericKey<128>, RowId, GenericComparator<128>>(meta_data_->index_id_,key_schema_,buffer_pool_manager);
+        return B_index;      
+    }*/
+    else ASSERT(false,"Cannot create such large index!");
   }
 
 private:

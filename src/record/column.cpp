@@ -1,4 +1,6 @@
 #include "record/column.h"
+#include <_types/_uint32_t.h>
+#include "record/type_id.h"
 
 Column::Column(std::string column_name, TypeId type, uint32_t index, bool nullable, bool unique)
         : name_(std::move(column_name)), type_(type), table_ind_(index),
@@ -30,7 +32,9 @@ uint32_t Column::SerializeTo(char *buf) const {
   uint32_t ofs=0;
   MACH_WRITE_UINT32(buf,COLUMN_MAGIC_NUM);
   ofs+=sizeof(uint32_t);
-  MACH_WRITE_STRING(buf+ofs,name_);
+  uint32_t len=name_.length();
+  MACH_WRITE_UINT32(buf+ofs, len);
+  MACH_WRITE_STRING(buf+ofs+sizeof(uint32_t),name_);
   ofs+=MACH_STR_SERIALIZED_SIZE(name_);
   MACH_WRITE_TO(TypeId,buf+ofs,type_);
   ofs+=sizeof(TypeId);
@@ -46,8 +50,8 @@ uint32_t Column::SerializeTo(char *buf) const {
 }
 
 uint32_t Column::GetSerializedSize() const {
-  return sizeof(Column)+sizeof(uint32_t);
-  //return sizeof(uint32_t)*3+sizeof(bool)*2+MACH_STR_SERIALIZED_SIZE(name_)+sizeof(TypeId);
+  //return sizeof(Column)+sizeof(uint32_t);
+  return sizeof(uint32_t)*3+sizeof(bool)*2+MACH_STR_SERIALIZED_SIZE(name_)+sizeof(TypeId);
 }
 
 uint32_t Column::DeserializeFrom(char *buf, Column *&column, MemHeap *heap) {
@@ -58,7 +62,10 @@ uint32_t Column::DeserializeFrom(char *buf, Column *&column, MemHeap *heap) {
   uint32_t l = MACH_READ_UINT32(buf+ofs);
   ofs+=sizeof(uint32_t);
   std::string name="";
-  for(uint32_t i=ofs;i<ofs+l;i++)name+=buf[i],ofs++;
+  for(uint32_t i=0;i<l;i++){
+    name+=buf[ofs];
+    ofs++;
+  }
   TypeId Id=MACH_READ_FROM(TypeId,buf+ofs);
   ofs+=sizeof(TypeId);
   uint32_t len=MACH_READ_UINT32(buf+ofs);
@@ -69,6 +76,7 @@ uint32_t Column::DeserializeFrom(char *buf, Column *&column, MemHeap *heap) {
   ofs+=sizeof(bool);
   bool Unique=MACH_READ_FROM(bool,buf+ofs);
   ofs+=sizeof(bool);
-  column=new(heap->Allocate(sizeof(Column)))Column(name,Id,len,table_index,Nullable,Unique);
+  if(Id==kTypeChar)column=new(heap->Allocate(sizeof(Column)))Column(name,Id,len,table_index,Nullable,Unique);
+  else column=new(heap->Allocate(sizeof(Column)))Column(name,Id,table_index,Nullable,Unique);
   return ofs;
 }
