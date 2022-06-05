@@ -2,14 +2,18 @@
 #define MINISQL_INDEX_ITERATOR_H
 
 #include "page/b_plus_tree_leaf_page.h"
+#include "index/b_plus_tree.h"
 
 #define INDEXITERATOR_TYPE IndexIterator<KeyType, ValueType, KeyComparator>
+
+INDEX_TEMPLATE_ARGUMENTS
+class BPlusTree ;
 
 INDEX_TEMPLATE_ARGUMENTS
 class IndexIterator {
 public:
   // you may define your own constructor based on your member variables
-  explicit IndexIterator();
+  explicit IndexIterator(BPlusTree<KeyType, ValueType, KeyComparator> *tree, BPlusTreeLeafPage<KeyType, ValueType, KeyComparator> *leaf, int index);
 
   ~IndexIterator();
 
@@ -27,6 +31,9 @@ public:
 
 private:
   // add your own private member variables here
+  BPlusTree<KeyType, ValueType, KeyComparator> *tree_;
+  BPlusTreeLeafPage<KeyType, ValueType, KeyComparator> *leaf_;
+  int index_;
 };
 
 
