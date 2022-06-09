@@ -1,7 +1,7 @@
 #ifndef MINISQL_COLUMN_H
 #define MINISQL_COLUMN_H
 
-#include <string>
+#include <cstring>
 
 #include "common/macros.h"
 #include "record/types.h"
@@ -25,6 +25,8 @@ public:
   uint32_t GetTableInd() const { return table_ind_; }
 
   bool IsNullable() const { return nullable_; }
+
+  bool IsUnique() const { return unique_; }
 
   TypeId GetType() const { return type_; }
 

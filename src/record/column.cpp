@@ -1,5 +1,5 @@
 #include "record/column.h"
-#include <_types/_uint32_t.h>
+// #include <_types/_uint32_t.h>
 #include "record/type_id.h"
 
 Column::Column(std::string column_name, TypeId type, uint32_t index, bool nullable, bool unique)
@@ -58,7 +58,7 @@ uint32_t Column::DeserializeFrom(char *buf, Column *&column, MemHeap *heap) {
   uint32_t ofs=0;
   uint32_t Magic=MACH_READ_UINT32(buf+ofs);
   ofs+=sizeof(uint32_t);
-  ASSERT(Magic==COLUMN_MAGIC_NUM,"Serializing failed!");
+  if(Magic!=COLUMN_MAGIC_NUM) printf("Serializing failed!");
   uint32_t l = MACH_READ_UINT32(buf+ofs);
   ofs+=sizeof(uint32_t);
   std::string name="";

@@ -2,7 +2,7 @@
 #define MINISQL_CONFIG_H
 
 #include <cstdint>
-#include <cstring>
+#include <string>
 
 static constexpr int INVALID_PAGE_ID = -1;           // invalid page id
 static constexpr int INVALID_FRAME_ID = -1;          // invalid transaction id

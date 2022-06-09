@@ -80,7 +80,7 @@ public:
   /**
    * @return the begin iterator of this table
    */
-  TableIterator Begin(Transaction *txn);
+  TableIterator Begin(Transaction *txn = NULL);
 
   /**
    * @return the end iterator of this table
@@ -112,6 +112,7 @@ private:
                     LogManager *log_manager, LockManager *lock_manager)
           : buffer_pool_manager_(buffer_pool_manager),
             first_page_id_(first_page_id),
+            last_page_id_(first_page_id_),
             schema_(schema),
             log_manager_(log_manager),
             lock_manager_(lock_manager) {}
@@ -119,6 +120,7 @@ private:
 private:
   BufferPoolManager *buffer_pool_manager_;
   page_id_t first_page_id_;
+  page_id_t last_page_id_;
   Schema *schema_;
   [[maybe_unused]] LogManager *log_manager_;
   [[maybe_unused]] LockManager *lock_manager_;

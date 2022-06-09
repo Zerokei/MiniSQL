@@ -8,13 +8,13 @@ TableIterator::TableIterator(){
 }
 
 TableIterator::TableIterator(const TableIterator &other) {
-  row_=other.row_;
+  row_=new Row(*other.row_);
   heap_=other.heap_;
   now_page_=other.now_page_;
 }
 
 TableIterator::~TableIterator() {
-
+  delete row_;
 }
 
 bool TableIterator::operator==(const TableIterator &itr) const {
@@ -39,13 +39,16 @@ Row *TableIterator::operator->() {
 
 TableIterator &TableIterator::operator++() {
   auto page=reinterpret_cast<TablePage *>(heap_->buffer_pool_manager_->FetchPage(now_page_));
+  //cout<<row_->GetRowId().GetPageId()<<" "<<row_->GetRowId().GetSlotNum()<<"~~~~"<<endl;
   bool flag=page->GetTuple(row_,heap_->schema_,nullptr,heap_->lock_manager_);
   heap_->buffer_pool_manager_->UnpinPage(page->GetTablePageId(),false);
   ASSERT(flag,"This tuple doesn't exist in this page!");
-  RowId *rid=nullptr;
+  RowId new_RowId;
+  RowId *rid=&new_RowId;
+  //cout<<row_->GetRowId().GetPageId()<<" "<<row_->GetRowId().GetSlotNum()<<"xxxxx"<<endl;
   flag=page->GetNextTupleRid(row_->GetRowId(),rid);
   if(flag){
-    row_->SetRowId(*rid);
+    row_->SetRowId(new_RowId);
     page->GetTuple(row_,heap_->schema_,nullptr,heap_->lock_manager_);
     return *this;
   }

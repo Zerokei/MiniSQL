@@ -1,7 +1,7 @@
 #ifndef MINISQL_CATALOG_H
 #define MINISQL_CATALOG_H
 
-#include <string>
+#include <cstring>
 #include <map>
 #include <unordered_map>
 

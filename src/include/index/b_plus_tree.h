@@ -2,7 +2,7 @@
 #define MINISQL_B_PLUS_TREE_H
 
 #include <queue>
-#include <string>
+#include <cstring>
 #include <vector>
 
 #include "page/b_plus_tree_internal_page.h"

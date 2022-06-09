@@ -1,5 +1,5 @@
 #include "catalog/catalog.h"
-#include <_types/_uint32_t.h>
+// #include <_types/_uint32_t.h>
 #include <cstddef>
 #include "buffer/buffer_pool_manager.h"
 #include "catalog/indexes.h"
@@ -41,7 +41,7 @@ CatalogMeta *CatalogMeta::DeserializeFrom(char *buf, MemHeap *heap) {
   uint32_t ofs=0;
   uint32_t Magic=MACH_READ_UINT32(buf+ofs);
   ofs+=sizeof(uint32_t);
-  ASSERT(Magic==CATALOG_METADATA_MAGIC_NUM,"Serializing of CatalogMeta failed!");
+  if(Magic!=CATALOG_METADATA_MAGIC_NUM) printf("Serializing of CatalogMeta failed!");
   CatalogMeta *Cata=CatalogMeta::NewInstance(heap);
   Cata->GetTableMetaPages()->clear();
   Cata->GetIndexMetaPages()->clear();
@@ -89,6 +89,10 @@ CatalogManager::CatalogManager(BufferPoolManager *buffer_pool_manager, LockManag
     catalog_meta_=CatalogMeta::NewInstance(heap_);
     catalog_meta_->GetIndexMetaPages()->clear();
     catalog_meta_->GetTableMetaPages()->clear();
+    
+    auto page=buffer_pool_manager->FetchPage(CATALOG_META_PAGE_ID);
+    catalog_meta_->SerializeTo(page->GetData());
+    buffer_pool_manager_->UnpinPage(CATALOG_META_PAGE_ID, true);
   }
   else {
     Page *page=buffer_pool_manager_->FetchPage(CATALOG_META_PAGE_ID);
@@ -121,18 +125,25 @@ dberr_t CatalogManager::CreateTable(const string &table_name, TableSchema *schem
   table_id_t table_id=catalog_meta_->GetNextTableId()+1;
   page_id_t page_id=0;
   Page* page1=buffer_pool_manager_->NewPage(page_id);
+
   catalog_meta_->GetTableMetaPages()->insert(make_pair(table_id,page_id));
   page_id_t root_page_id=0;
   buffer_pool_manager_->NewPage(root_page_id);
-  TableMetadata *TableMeta=TableMetadata::Create(table_id, table_name, root_page_id, schema, heap_);
-  TableHeap * table_heap=TableHeap::Create(buffer_pool_manager_,root_page_id,schema,log_manager_,lock_manager_,heap_);
+  // cerr << root_page_id << endl;
+  TableSchema *new_schema=Schema::DeepCopySchema(schema,heap_);
+  TableMetadata *TableMeta=TableMetadata::Create(table_id, table_name, root_page_id, new_schema, heap_);
+  TableHeap * table_heap=TableHeap::Create(buffer_pool_manager_,root_page_id,new_schema,log_manager_,lock_manager_,heap_);
+  auto new_Page=reinterpret_cast<TablePage *>(buffer_pool_manager_->FetchPage(root_page_id));
+  new_Page->Init(root_page_id,INVALID_PAGE_ID,log_manager_,txn);
+  // buffer_pool_manager_->UnpinPage(root_page_id,true);
   table_in->Init(TableMeta, table_heap);
   table_info=table_in;
   table_names_.insert((make_pair(table_name,table_id)));
   tables_.insert(make_pair(table_id,table_in));
   TableMeta->SerializeTo(page1->GetData());
   buffer_pool_manager_->UnpinPage(page_id, true);
-  Page *page0=buffer_pool_manager_->FetchPage(0);
+  buffer_pool_manager_->UnpinPage(root_page_id,true);
+  Page *page0=buffer_pool_manager_->FetchPage(CATALOG_META_PAGE_ID);
   catalog_meta_->SerializeTo(page0->GetData());
   buffer_pool_manager_->UnpinPage(CATALOG_META_PAGE_ID, true);
   return DB_SUCCESS;
@@ -195,7 +206,7 @@ dberr_t CatalogManager::CreateIndex(const std::string &table_name, const string 
   index_names_.insert(make_pair(table_name,Map));
   indexes_.insert(make_pair(index_id,index_info));
   meta_data->SerializeTo(page1->GetData());
-  Page *page0=buffer_pool_manager_->FetchPage(0);
+  Page *page0=buffer_pool_manager_->FetchPage(CATALOG_META_PAGE_ID);
   catalog_meta_->SerializeTo(page0->GetData());
   buffer_pool_manager_->UnpinPage(page_id, true);
   buffer_pool_manager_->UnpinPage(CATALOG_META_PAGE_ID, true);
@@ -262,7 +273,7 @@ dberr_t CatalogManager::DropTable(const string &table_name) {
   buffer_pool_manager_->UnpinPage(page_id, true);
   buffer_pool_manager_->DeletePage(page_id);
   delete(table_info);
-  Page *page0=buffer_pool_manager_->FetchPage(0);
+  Page *page0=buffer_pool_manager_->FetchPage(CATALOG_META_PAGE_ID);
   catalog_meta_->SerializeTo(page0->GetData());
   buffer_pool_manager_->UnpinPage(CATALOG_META_PAGE_ID, true);
   return DB_SUCCESS;
@@ -291,7 +302,7 @@ dberr_t CatalogManager::DropIndex(const string &table_name, const string &index_
   buffer_pool_manager_->UnpinPage(page_id,true);
   buffer_pool_manager_->DeletePage(page_id);
   delete(index_info);
-  Page *page0=buffer_pool_manager_->FetchPage(0);
+  Page *page0=buffer_pool_manager_->FetchPage(CATALOG_META_PAGE_ID);
   catalog_meta_->SerializeTo(page0->GetData());
   buffer_pool_manager_->UnpinPage(CATALOG_META_PAGE_ID, true);
   return DB_SUCCESS;
@@ -327,9 +338,11 @@ dberr_t CatalogManager::LoadTable(const table_id_t table_id, const page_id_t pag
 dberr_t CatalogManager::LoadIndex(const index_id_t index_id, const page_id_t page_id) {
   if(buffer_pool_manager_->IsPageFree(page_id))return DB_FAILED;
   Page *index_meta_page=buffer_pool_manager_->FetchPage(page_id);
-  buffer_pool_manager_->UnpinPage(page_id, false);
   IndexInfo *index_info=IndexInfo::Create(heap_);
-  if(index_info==nullptr)return DB_FAILED;
+  if(index_info==nullptr){
+    buffer_pool_manager_->UnpinPage(page_id, false);
+    return DB_FAILED;
+  }
   IndexMetadata *index_meta=nullptr;
   IndexMetadata::DeserializeFrom(index_meta_page->GetData(), index_meta, index_info->GetMemHeap());
   buffer_pool_manager_->UnpinPage(page_id, false);

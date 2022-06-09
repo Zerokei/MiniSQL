@@ -1,7 +1,7 @@
 #ifndef MINISQL_INDEXES_H
 #define MINISQL_INDEXES_H
 
-#include <_types/_uint32_t.h>
+// #include <_types/_uint32_t.h>
 #include <cmath>
 #include <memory>
 
@@ -134,13 +134,17 @@ private:
         new(buf)BPlusTreeIndex<GenericKey<64>, RowId, GenericComparator<64>>(meta_data_->index_id_,key_schema_,buffer_pool_manager);
         return B_index;
     }
-    /*if(ofs<=128){
+    if(ofs<=128){
       buf=heap_->Allocate(sizeof(BPlusTreeIndex<GenericKey<128>, RowId, GenericComparator<128>>));
       BPlusTreeIndex<GenericKey<128>, RowId, GenericComparator<128>> * B_index=
         new(buf)BPlusTreeIndex<GenericKey<128>, RowId, GenericComparator<128>>(meta_data_->index_id_,key_schema_,buffer_pool_manager);
         return B_index;      
-    }*/
-    else ASSERT(false,"Cannot create such large index!");
+    } else {
+      buf=heap_->Allocate(sizeof(BPlusTreeIndex<GenericKey<256>, RowId, GenericComparator<256>>));
+      BPlusTreeIndex<GenericKey<256>, RowId, GenericComparator<256>> * B_index=
+        new(buf)BPlusTreeIndex<GenericKey<256>, RowId, GenericComparator<256>>(meta_data_->index_id_,key_schema_,buffer_pool_manager);
+        return B_index;      
+    }
   }
 
 private:

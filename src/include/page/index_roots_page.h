@@ -1,7 +1,7 @@
 #ifndef MINISQL_INDEX_ROOTS_PAGE_H
 #define MINISQL_INDEX_ROOTS_PAGE_H
 
-#include <string>
+#include <cstring>
 
 #include "common/config.h"
 

@@ -1,5 +1,5 @@
 #include "catalog/table.h"
-#include <_types/_uint32_t.h>
+// #include <_types/_uint32_t.h>
 #include "common/config.h"
 #include "common/macros.h"
 
@@ -29,7 +29,7 @@ uint32_t TableMetadata::GetSerializedSize() const {
 uint32_t TableMetadata::DeserializeFrom(char *buf, TableMetadata *&table_meta, MemHeap *heap) {
   uint32_t ofs=0;
   uint32_t Magic=MACH_READ_UINT32(buf);
-  ASSERT(Magic==TABLE_METADATA_MAGIC_NUM,"Deserializing of TableMetadata Failed!");
+  if(Magic!=TABLE_METADATA_MAGIC_NUM) printf("Deserializing of TableMetadata Failed!");
   ofs+=sizeof(uint32_t);
   table_id_t table_id=MACH_READ_FROM(table_id_t, buf+ofs);
   ofs+=sizeof(table_id_t);

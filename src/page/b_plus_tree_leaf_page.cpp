@@ -41,9 +41,15 @@ void B_PLUS_TREE_LEAF_PAGE_TYPE::SetNextPageId(page_id_t next_page_id) {
  */
 INDEX_TEMPLATE_ARGUMENTS
 int B_PLUS_TREE_LEAF_PAGE_TYPE::KeyIndex(const KeyType &key, const KeyComparator &comparator) const {
-  for(int i = 0; i < GetSize(); ++i) 
-    if(comparator(array_[i].first, key) >= 0) return i;
-  return GetSize();
+  int L = 0, R = GetSize() - 1, p = GetSize();
+  while(L <= R) {
+    int mid = (L + R) >> 1;
+    int o = comparator(key, array_[mid].first);
+    if(o < 0) p = mid, R = mid - 1;
+    else if(o > 0) L = mid + 1;
+    else return mid;
+  }
+  return p;
 }
 
 /*
@@ -93,9 +99,14 @@ void B_PLUS_TREE_LEAF_PAGE_TYPE::Arrange(BPlusTreeLeafPage *recipient) {
  */
 INDEX_TEMPLATE_ARGUMENTS
 int B_PLUS_TREE_LEAF_PAGE_TYPE::Insert(const KeyType &key, const ValueType &value, const KeyComparator &comparator) {
-  int p = GetSize();
-  for(int i = GetSize() - 1; i >= 0; --i) 
-    if(comparator(array_[i].first, key) > 0) array_[i + 1] = array_[i], p = i;
+  int L = 0, R = GetSize() - 1, p = GetSize();
+  while(L <= R) {
+    int mid = (L + R) >> 1;
+    int o = comparator(key, array_[mid].first);
+    if(o < 0) p = mid, R = mid - 1;
+    else L = mid + 1;
+  }
+  for(int i = GetSize() - 1; i >= p; --i) array_[i + 1] = array_[i];
   array_[p] = make_pair(key, value);
   IncreaseSize(1);
   return GetSize();
@@ -130,8 +141,14 @@ void B_PLUS_TREE_LEAF_PAGE_TYPE::CopyNFrom(MappingType *items, int size) {
  */
 INDEX_TEMPLATE_ARGUMENTS
 bool B_PLUS_TREE_LEAF_PAGE_TYPE::Lookup(const KeyType &key, ValueType &value, const KeyComparator &comparator) const {
-  for(int i = 0; i < GetSize(); ++i) 
-    if(comparator(key, array_[i].first) == 0) return value = array_[i].second, true;
+  int L = 0, R = GetSize() - 1;
+  while(L <= R) {
+    int mid = (L + R) >> 1;
+    int o = comparator(key, array_[mid].first);
+    if(o < 0) R = mid - 1;
+    else if(o > 0) L = mid + 1;
+    else return value = array_[mid].second, true;
+  }
   return false;
 }
 
@@ -215,3 +232,9 @@ class BPlusTreeLeafPage<GenericKey<32>, RowId, GenericComparator<32>>;
 
 template
 class BPlusTreeLeafPage<GenericKey<64>, RowId, GenericComparator<64>>;
+
+template
+class BPlusTreeLeafPage<GenericKey<128>, RowId, GenericComparator<128>>;
+
+template
+class BPlusTreeLeafPage<GenericKey<256>, RowId, GenericComparator<256>>;

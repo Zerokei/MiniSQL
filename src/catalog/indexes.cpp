@@ -1,5 +1,5 @@
 #include "catalog/indexes.h"
-#include <_types/_uint32_t.h>
+// #include <_types/_uint32_t.h>
 #include <sys/types.h>
 #include "common/config.h"
 
@@ -40,7 +40,7 @@ uint32_t IndexMetadata::GetSerializedSize() const {
 uint32_t IndexMetadata::DeserializeFrom(char *buf, IndexMetadata *&index_meta, MemHeap *heap) {
   int32_t ofs=0;
   uint32_t Magic=MACH_READ_UINT32(buf);
-  ASSERT(Magic==INDEX_METADATA_MAGIC_NUM,"Deserializing of TableMetadata Failed!");
+  if(Magic!=INDEX_METADATA_MAGIC_NUM) printf("Deserializing of TableMetadata Failed!");
   ofs+=sizeof(uint32_t);
   index_id_t index_id=MACH_READ_FROM(index_id_t, buf+ofs);
   ofs+=sizeof(index_id_t);

@@ -4,7 +4,7 @@
 #include <cassert>
 #include <climits>
 #include <cstdlib>
-#include <string>
+#include <cstring>
 #include "buffer/buffer_pool_manager.h"
 
 #define MappingType std::pair<KeyType, ValueType>

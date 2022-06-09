@@ -5,7 +5,7 @@
 #include <fstream>
 #include <iostream>
 #include <mutex>
-#include <string>
+#include <cstring>
 #include "common/config.h"
 #include "common/macros.h"
 #include "page/bitmap_page.h"

@@ -3,6 +3,7 @@
 
 #include <cstdint>
 #include <cmath>
+#include <cstring>
 #include <exception>
 #include "record/type_id.h"
 #include "common/config.h"
@@ -38,6 +39,25 @@ public:
     throw "Unknown field type.";
   }
 
+  static std :: string GetTypeName(TypeId type_id) {
+    switch (type_id) {
+      case kTypeInt:
+        return "int";
+      case kTypeFloat:
+        return "float";
+      case kTypeChar:
+        return "char";
+      default:
+        break;
+    }
+    throw "Unknown field type.";
+  }
+  static TypeId GetTid(std :: string type_name) {
+    if(type_name == "int") return kTypeInt;
+    else if(type_name == "float") return kTypeFloat;
+    else if(type_name == "char") return kTypeChar;
+    throw "Unknown field type.";
+  }
   inline static Type *GetInstance(TypeId type_id) {
     return type_singletons_[type_id];
   }

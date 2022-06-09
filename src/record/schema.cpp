@@ -28,7 +28,7 @@ uint32_t Schema::DeserializeFrom(char *buf, Schema *&schema, MemHeap *heap) {
   uint32_t ofs=0;
   uint32_t Magic=MACH_READ_UINT32(buf+ofs);
   ofs+=sizeof(uint32_t);
-  ASSERT(Magic==SCHEMA_MAGIC_NUM,"Serializing failed!");
+  if(Magic!=SCHEMA_MAGIC_NUM) printf("Serializing failed!");
   //schema->GetColumns.clear();
   std::vector<Column *> Vec;
   Vec.clear();

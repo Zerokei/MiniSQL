@@ -18,7 +18,7 @@ public:
 
 
   explicit TableIterator(Row *row,TableHeap *heap,page_id_t now_page)
-    : row_(row),
+    : row_(new Row(*row)),
       heap_(heap),
       now_page_(now_page){}
 
@@ -29,9 +29,9 @@ public:
 
   virtual ~TableIterator();
 
-  inline bool operator==(const TableIterator &itr) const;
+  bool operator==(const TableIterator &itr) const;
 
-  inline bool operator!=(const TableIterator &itr) const;
+  bool operator!=(const TableIterator &itr) const;
 
   const Row &operator*();
 

@@ -41,7 +41,7 @@ void B_PLUS_TREE_INTERNAL_PAGE_TYPE::SetKeyAt(int index, const KeyType &key) {
  */
 INDEX_TEMPLATE_ARGUMENTS
 int B_PLUS_TREE_INTERNAL_PAGE_TYPE::ValueIndex(const ValueType &value) const {
-  for(int i = 0; i < GetSize(); ++i) 
+  for(int i = GetSize() - 1; i >= 0; --i) 
     if(array_[i].second == value) return i;
   assert(0);
   return -1;
@@ -70,10 +70,14 @@ INDEX_TEMPLATE_ARGUMENTS
 ValueType B_PLUS_TREE_INTERNAL_PAGE_TYPE::Lookup(const KeyType &key, const KeyComparator &comparator) const {
   // replace with your own code
   assert(GetSize() > 0);
-  int p = 0;
-  for(int i = 1; i < GetSize(); ++i) 
-    if(comparator(key, array_[i].first) >= 0)
-      p = i;
+
+  int L = 1, R = GetSize() - 1, p = 0;
+  while(L <= R) {
+    int mid = (L + R) >> 1;
+    int o = comparator(key, array_[mid].first);
+    if(o < 0) R = mid - 1;
+    else p = mid, L = mid + 1;
+  }
   return array_[p].second;
 }
 
@@ -235,3 +239,9 @@ class BPlusTreeInternalPage<GenericKey<32>, page_id_t, GenericComparator<32>>;
 
 template
 class BPlusTreeInternalPage<GenericKey<64>, page_id_t, GenericComparator<64>>;
+
+template
+class BPlusTreeInternalPage<GenericKey<128>, page_id_t, GenericComparator<128>>;
+
+template
+class BPlusTreeInternalPage<GenericKey<256>, page_id_t, GenericComparator<256>>;

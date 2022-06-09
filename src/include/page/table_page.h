@@ -17,7 +17,7 @@
  *  ----------------------------------------------------------------
  **/
 
-#include <cstring>
+#include <string>
 #include "common/macros.h"
 #include "common/rowid.h"
 #include "page/page.h"

@@ -3,8 +3,7 @@
 
 uint32_t Row::SerializeTo(char *buf, Schema *schema) const {
   uint32_t ofs=0;
-  MACH_WRITE_TO(RowId,buf,rid_);
-  ofs+=sizeof(RowId);
+  //printf("%d %u????\n",rid_.GetPageId(),rid_.GetSlotNum());
   size_t n=GetFieldCount();
   MACH_WRITE_TO(size_t,buf+ofs,n);
   ofs+=sizeof(size_t);
@@ -33,9 +32,6 @@ uint32_t Row::SerializeTo(char *buf, Schema *schema) const {
 
 uint32_t Row::DeserializeFrom(char *buf, Schema *schema) {
   uint32_t ofs=0;
-  RowId rid=MACH_READ_FROM(RowId,buf);
-  rid_=rid;
-  ofs+=sizeof(RowId);
   size_t n=MACH_READ_FROM(size_t,buf+ofs);
   ofs+=sizeof(size_t);
   size_t cnt=(n+7)/8;
@@ -82,7 +78,7 @@ uint32_t Row::DeserializeFrom(char *buf, Schema *schema) {
 
 uint32_t Row::GetSerializedSize(Schema *schema) const {
   size_t n=schema->GetColumnCount();
-  uint32_t ofs=sizeof(RowId)+sizeof(size_t);
+  uint32_t ofs=sizeof(size_t);
   ofs+=(n+7)/8;
   for(uint32_t i=0;i<n;i++){
     Field *fie=GetField(i);

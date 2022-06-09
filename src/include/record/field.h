@@ -83,7 +83,9 @@ public:
   inline bool IsNull() const {
     return is_null_;
   }
-
+  inline TypeId GetTypeId() const {
+    return type_id_;
+  }
   inline uint32_t GetLength() const {
     return Type::GetInstance(type_id_)->GetLength(*this);
   }
@@ -137,8 +139,17 @@ public:
     std::swap(first.is_null_, second.is_null_);
     std::swap(first.manage_data_, second.manage_data_);
   }
-
-protected:
+  std :: string GetString() const{
+    if(type_id_ == kTypeInt) {
+        return std :: to_string(value_.integer_);
+    } else if(type_id_ == kTypeFloat) {
+        return std :: to_string(value_.float_);
+    } else if(type_id_ == kTypeChar) {
+        std :: string s = "";
+        for(uint32_t i = 0; i < len_; ++i) s += *(value_.chars_ + i);
+        return s;
+    } else throw "Unknown field type.";
+  }
   union Val {
     int32_t integer_;
     float float_;

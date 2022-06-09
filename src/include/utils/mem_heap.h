@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <cstdlib>
 #include <unordered_set>
+#include <list>
 #include "common/macros.h"
 
 class MemHeap {
@@ -52,6 +53,7 @@ public:
 
 private:
   std::unordered_set<void *> allocated_;
+
 };
 
 #endif //MINISQL_MEM_HEAP_H

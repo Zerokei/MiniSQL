@@ -1,16 +1,21 @@
 #ifndef MINISQL_EXECUTE_ENGINE_H
 #define MINISQL_EXECUTE_ENGINE_H
 
-#include <string>
+#include <cstring>
 #include <unordered_map>
 #include "common/dberr.h"
 #include "common/instance.h"
 #include "transaction/transaction.h"
+#include "parser/syntax_tree_printer.h"
+#include "utils/tree_file_mgr.h"
 
 extern "C" {
+int yyparse(void);
+#include "parser/minisql_lex.h"
 #include "parser/parser.h"
-};
+}
 
+const bool use_local_file = false;
 /**
  * ExecuteContext stores all the context necessary to run in the execute engine
  * This struct is implemented by student self for necessary.
@@ -20,6 +25,7 @@ extern "C" {
 struct ExecuteContext {
   bool flag_quit_{false};
   Transaction *txn_{nullptr};
+  string message_{""};
 };
 
 /**
@@ -27,12 +33,12 @@ struct ExecuteContext {
  */
 class ExecuteEngine {
 public:
-  ExecuteEngine();
+ ExecuteEngine();
 
-  ~ExecuteEngine() {
-    for (auto it : dbs_) {
-      delete it.second;
-    }
+ ~ExecuteEngine() {
+   for (auto it : dbs_) {
+     delete it.second;
+   }
   }
 
   /**
@@ -79,9 +85,15 @@ private:
 
   dberr_t ExecuteQuit(pSyntaxNode ast, ExecuteContext *context);
 
-private:
-  [[maybe_unused]] std::unordered_map<std::string, DBStorageEngine *> dbs_;  /** all opened databases */
-  [[maybe_unused]] std::string current_db_;  /** current database */
+  dberr_t GetRows(const pSyntaxNode ast, TableInfo* tinfo, vector<IndexInfo*> iinfos, vector<Row>* row);
+  
+  bool CheckExpression(pSyntaxNode ast, const Row &row, TableInfo *table_info);
+
+ private:
+  unordered_map<string, DBStorageEngine *> dbs_;  /** all opened databases */
+  string current_db_;  /** current database */
+  fstream file_io_;
+  string* message_;
 };
 
 #endif //MINISQL_EXECUTE_ENGINE_H
