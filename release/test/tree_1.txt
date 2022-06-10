@@ -1,0 +1,87 @@
+digraph G {
+INT_9[shape=plain color=pink label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4">
+<TR><TD COLSPAN="3">P=9,Parent=-1</TD></TR>
+<TR><TD COLSPAN="3">max_size=4,min_size=2,size=3</TD></TR>
+<TR><TD PORT="p4"> </TD>
+<TD PORT="p8">13</TD>
+<TD PORT="p12">19</TD>
+</TR></TABLE>>];
+INT_4[shape=plain color=pink label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4">
+<TR><TD COLSPAN="2">P=4,Parent=9</TD></TR>
+<TR><TD COLSPAN="2">max_size=4,min_size=2,size=2</TD></TR>
+<TR><TD PORT="p2"> </TD>
+<TD PORT="p14">10</TD>
+</TR></TABLE>>];
+INT_9:p4 -> INT_4;
+LEAF_2[shape=plain color=green label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4">
+<TR><TD COLSPAN="3">P=2,Parent=4</TD></TR>
+<TR><TD COLSPAN="3">max_size=4,min_size=2,size=3</TD></TR>
+<TR><TD>2</TD>
+<TD>3</TD>
+<TD>4</TD>
+</TR></TABLE>>];
+LEAF_2 -> LEAF_14;
+{rank=same LEAF_2 LEAF_14};
+INT_4:p2 -> LEAF_2;
+LEAF_14[shape=plain color=green label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4">
+<TR><TD COLSPAN="2">P=14,Parent=4</TD></TR>
+<TR><TD COLSPAN="2">max_size=4,min_size=2,size=2</TD></TR>
+<TR><TD>10</TD>
+<TD>12</TD>
+</TR></TABLE>>];
+LEAF_14 -> LEAF_7;
+{rank=same LEAF_14 LEAF_7};
+INT_4:p14 -> LEAF_14;
+INT_8[shape=plain color=pink label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4">
+<TR><TD COLSPAN="2">P=8,Parent=9</TD></TR>
+<TR><TD COLSPAN="2">max_size=4,min_size=2,size=2</TD></TR>
+<TR><TD PORT="p7"> </TD>
+<TD PORT="p5">17</TD>
+</TR></TABLE>>];
+INT_9:p8 -> INT_8;
+LEAF_7[shape=plain color=green label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4">
+<TR><TD COLSPAN="3">P=7,Parent=4</TD></TR>
+<TR><TD COLSPAN="3">max_size=4,min_size=2,size=3</TD></TR>
+<TR><TD>13</TD>
+<TD>15</TD>
+<TD>16</TD>
+</TR></TABLE>>];
+LEAF_7 -> LEAF_5;
+{rank=same LEAF_7 LEAF_5};
+INT_4:p7 -> LEAF_7;
+LEAF_5[shape=plain color=green label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4">
+<TR><TD COLSPAN="2">P=5,Parent=4</TD></TR>
+<TR><TD COLSPAN="2">max_size=4,min_size=2,size=2</TD></TR>
+<TR><TD>17</TD>
+<TD>18</TD>
+</TR></TABLE>>];
+LEAF_5 -> LEAF_11;
+{rank=same LEAF_5 LEAF_11};
+INT_4:p5 -> LEAF_5;
+{rank=same INT_4 INT_8};
+INT_12[shape=plain color=pink label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4">
+<TR><TD COLSPAN="2">P=12,Parent=9</TD></TR>
+<TR><TD COLSPAN="2">max_size=4,min_size=2,size=2</TD></TR>
+<TR><TD PORT="p11"> </TD>
+<TD PORT="p3">24</TD>
+</TR></TABLE>>];
+INT_9:p12 -> INT_12;
+LEAF_11[shape=plain color=green label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4">
+<TR><TD COLSPAN="2">P=11,Parent=4</TD></TR>
+<TR><TD COLSPAN="2">max_size=4,min_size=2,size=2</TD></TR>
+<TR><TD>19</TD>
+<TD>22</TD>
+</TR></TABLE>>];
+LEAF_11 -> LEAF_3;
+{rank=same LEAF_11 LEAF_3};
+INT_4:p11 -> LEAF_11;
+LEAF_3[shape=plain color=green label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4">
+<TR><TD COLSPAN="3">P=3,Parent=4</TD></TR>
+<TR><TD COLSPAN="3">max_size=4,min_size=2,size=3</TD></TR>
+<TR><TD>24</TD>
+<TD>26</TD>
+<TD>27</TD>
+</TR></TABLE>>];
+INT_4:p3 -> LEAF_3;
+{rank=same INT_8 INT_12};
+}

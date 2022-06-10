@@ -15,7 +15,7 @@ int yyparse(void);
 #include "parser/parser.h"
 }
 
-const bool use_local_file = false;
+const bool use_local_file = true;
 /**
  * ExecuteContext stores all the context necessary to run in the execute engine
  * This struct is implemented by student self for necessary.

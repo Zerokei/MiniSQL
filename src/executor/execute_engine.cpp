@@ -33,7 +33,9 @@ void signal(int c) {
 }
 dberr_t ExecuteEngine::Execute(pSyntaxNode ast, ExecuteContext *context) {
   if(ast == nullptr) return DB_FAILED;
-  if(current_db_ != "") dbs_[current_db_]->bpm_->CheckAllUnpinned();
+  if(current_db_ != "") {
+      dbs_[current_db_]->bpm_->CheckAllUnpinned();
+  }
   message_ = &context->message_;
   switch (ast->type_) {
     case kNodeCreateDB:
@@ -209,10 +211,10 @@ dberr_t ExecuteEngine::ExecuteCreateTable(pSyntaxNode ast, ExecuteContext *conte
   }
 
   if(ast != nullptr) {
-    string primary_index_name = "_primary_index_" + table_name + "_";
+    string primary_index_name = "primary_index_" + table_name;
     vector<string> primary_keys;
-    pSyntaxNode pos = ast->child_;
-    while (pos != nullptr) {
+    auto pos = ast->child_;
+    while(pos != nullptr) {
       primary_keys.push_back(pos->val_);
       pos = pos->next_;
     }
@@ -225,7 +227,7 @@ dberr_t ExecuteEngine::ExecuteCreateTable(pSyntaxNode ast, ExecuteContext *conte
   for(auto col : table_info->GetSchema()->GetColumns()) {
     if(col->IsUnique()) {
       string unique_key = col->GetName();
-      string unique_index_name = "_unique_index_" + table_name + "_" + unique_key + "_";
+      string unique_index_name = "unique_index_" + table_name + "_" + unique_key;
       IndexInfo *temp;
       if(dbs_[current_db_]->catalog_mgr_->CreateIndex(table_name, unique_index_name, {unique_key}, nullptr, temp) != DB_SUCCESS) {
         *message_ += "Error: Create key " + unique_key + " unique index failed!\n";
@@ -245,7 +247,7 @@ dberr_t ExecuteEngine::ExecuteDropTable(pSyntaxNode ast, ExecuteContext *context
   }
   string table_name = ast->child_->val_;
   TableInfo *temp;
-  if (dbs_[current_db_]->catalog_mgr_->GetTable(table_name, temp) == DB_TABLE_NOT_EXIST) {
+  if(dbs_[current_db_]->catalog_mgr_->GetTable(table_name, temp) == DB_TABLE_NOT_EXIST) {
     *message_ += "Error: Table " + table_name + " does not exist!\n";
     return DB_FAILED;
   }
@@ -255,18 +257,18 @@ dberr_t ExecuteEngine::ExecuteShowIndexes(pSyntaxNode ast, ExecuteContext *conte
 #ifdef ENABLE_EXECUTE_DEBUG
   LOG(INFO) << "ExecuteShowIndexes" << std::endl;
 #endif
-  if (current_db_ == "") {
+  if(current_db_ == "") {
     *message_ += "Error: No database being used!\n";
     return DB_FAILED;
   }
   vector<TableInfo *> tables;
   vector<IndexInfo *> indexes;
   dbs_[current_db_]->catalog_mgr_->GetTables(tables);
-  for(auto it: tables) {
+  for(auto table: tables) {
     indexes.clear();
-    *message_ += "Table name: " + it->GetTableName() + "\nIndex name: ";
-    dbs_[current_db_]->catalog_mgr_->GetTableIndexes(it->GetTableName(), indexes);
-    for(auto jt: indexes) *message_ += jt->GetIndexName() + " ";
+    *message_ += "Table name: " + table->GetTableName() + "\nIndex name: ";
+    dbs_[current_db_]->catalog_mgr_->GetTableIndexes(table->GetTableName(), indexes);
+    for(auto index: indexes) *message_ += index->GetIndexName() + " ";
     *message_ += "\n";
   }
   return DB_SUCCESS;
@@ -295,7 +297,7 @@ dberr_t ExecuteEngine::ExecuteSelect(pSyntaxNode ast, ExecuteContext *context) {
   }
   string table_name = ast->child_->next_->val_;
   TableInfo *table_info;
-  if (dbs_[current_db_]->catalog_mgr_->GetTable(table_name, table_info) != DB_SUCCESS) {
+  if(dbs_[current_db_]->catalog_mgr_->GetTable(table_name, table_info) != DB_SUCCESS) {
     *message_ += "Error: Table " + table_name + " does not exist!\n";
     return DB_FAILED;
   }
@@ -313,7 +315,7 @@ dberr_t ExecuteEngine::ExecuteSelect(pSyntaxNode ast, ExecuteContext *context) {
     Schema *schema = table_info->GetSchema();
     for(auto &row: rows) {
       vector<Field> projection_fields;
-      pSyntaxNode pos = ast->child_->child_;
+      auto pos = ast->child_->child_;
       while(pos != nullptr) {
         string column_name = pos->val_;
         uint32_t column_indexex;
@@ -355,7 +357,7 @@ dberr_t ExecuteEngine::ExecuteInsert(pSyntaxNode ast, ExecuteContext *context) {
     return DB_FAILED;
   }
   Schema *schema = table_info->GetSchema();
-  pSyntaxNode pos = ast->child_->next_->child_;
+  auto pos = ast->child_->next_->child_;
   vector<Field> fields;
 
   uint32_t cnt = 0;
@@ -376,7 +378,7 @@ dberr_t ExecuteEngine::ExecuteInsert(pSyntaxNode ast, ExecuteContext *context) {
 
   for(auto it: index_infos) {
     vector<Field> keys;
-    for (uint32_t i = 0; i < it->GetIndexKeySchema()->GetColumnCount(); i++) {
+    for(uint32_t i = 0; i < it->GetIndexKeySchema()->GetColumnCount(); i++) {
       keys.push_back(*row.GetField(it->GetIndexKeySchema()->GetColumn(i)->GetTableInd()));
     }
     vector<RowId> temp;
@@ -476,7 +478,7 @@ dberr_t ExecuteEngine::ExecuteUpdate(pSyntaxNode ast, ExecuteContext *context) {
   }
 
   vector<char *> val(schema->GetColumnCount(), nullptr);
-  pSyntaxNode pos = ast->child_->next_;
+  auto pos = ast->child_->next_;
   pos = pos->child_;
   while (pos != nullptr) {
     uint32_t column_index;
@@ -621,6 +623,8 @@ dberr_t ExecuteEngine::ExecuteExecfile(pSyntaxNode ast, ExecuteContext *context)
 
     clock_t start = clock();
     dberr_t status = Execute(MinisqlGetParserRootNode(), context);
+    clock_t stop = clock();
+
     MinisqlParserFinish();
     yy_delete_buffer(bp);
     yylex_destroy();
@@ -629,7 +633,6 @@ dberr_t ExecuteEngine::ExecuteExecfile(pSyntaxNode ast, ExecuteContext *context)
       file_io_.close();
       return DB_FAILED;
     } else {
-      clock_t stop = clock();
       tot_time += (double)(stop - start) / CLOCKS_PER_SEC;
       cmd_cnt++;
     }
@@ -662,7 +665,7 @@ dberr_t ExecuteEngine::GetRows(const pSyntaxNode ast, TableInfo *table_info,vect
   if(ast->child_->type_ == kNodeCompareOperator) {
     string column_name = ast->child_->child_->val_, comparator = ast->child_->val_;
     uint32_t column_index;
-    if (table_info->GetSchema()->GetColumnIndex(column_name, column_index) == DB_COLUMN_NAME_NOT_EXIST) {
+    if(table_info->GetSchema()->GetColumnIndex(column_name, column_index) == DB_COLUMN_NAME_NOT_EXIST) {
       *message_ += "Error: Column " + column_name + " does not exist!\n";
       return DB_FAILED;
     }
@@ -689,9 +692,10 @@ dberr_t ExecuteEngine::GetRows(const pSyntaxNode ast, TableInfo *table_info,vect
 }
 
 bool ExecuteEngine::CheckExpression(pSyntaxNode ast, const Row &row, TableInfo *table_info) {
-  if(ast->type_ == kNodeConditions)  return CheckExpression(ast->child_, row, table_info);
-  else if (ast->type_ == kNodeConnector)  {
-    pSyntaxNode pos = ast->child_;
+  if(ast->type_ == kNodeConditions) {
+      return CheckExpression(ast->child_, row, table_info);
+  } else if(ast->type_ == kNodeConnector)  {
+    auto pos = ast->child_;
     string connector = ast->val_;
     if(connector == "and") {
       while(pos != nullptr) {
@@ -715,7 +719,7 @@ bool ExecuteEngine::CheckExpression(pSyntaxNode ast, const Row &row, TableInfo *
     }
     Field *field = row.GetField(column_index);
     string comparator = ast->val_;
-    Field temp=GetField(field->GetTypeId(), ast->child_->next_->val_); 
+    Field temp = GetField(field->GetTypeId(), ast->child_->next_->val_); 
     if(comparator == "=") return field->CompareEquals(temp);
     else if(comparator == "<") return field->CompareLessThan(temp);
     else if(comparator == "<=") return field->CompareLessThanEquals(temp);

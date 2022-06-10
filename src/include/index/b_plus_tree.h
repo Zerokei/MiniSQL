@@ -94,7 +94,7 @@ private:
 
   bool AdjustRoot(BPlusTreePage *node);
 
-  void UpdateRootPageId(int insert_record = 0);
+  void UpdateRootPageId(int flag);
 
   /* Debug Routines for FREE!! */
   void ToGraph(BPlusTreePage *page, BufferPoolManager *bpm, std::ofstream &out) const;
@@ -106,6 +106,8 @@ private:
   BPlusTreePage *InsertDown(BPlusTreePage *cur_tree_page,const KeyType &key, const ValueType &value, KeyType &new_key, bool &found);
 
   KeyType RemoveDown(BPlusTreePage *cur_tree_page, const KeyType &key);
+
+  void DestroyDown(BPlusTreePage *cur_tree_page);
 
   // member variable
   index_id_t index_id_;
