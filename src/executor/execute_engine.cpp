@@ -733,27 +733,28 @@ dberr_t ExecuteEngine::GetRows(const pSyntaxNode ast, TableInfo *table_info,vect
       }
     }
   }
+  dberr_t status = DB_SUCCESS;
   for(auto it = table_heap->Begin(); it != table_heap->End(); it++) 
-    if(CheckExpression(ast, *it, table_info)) 
+    if(CheckExpression(ast, *it, table_info, status))  
       rows->push_back(*it);
-  return DB_SUCCESS;
+  return status;
 }
 
-bool ExecuteEngine::CheckExpression(pSyntaxNode ast, const Row &row, TableInfo *table_info) {
+bool ExecuteEngine::CheckExpression(pSyntaxNode ast, const Row &row, TableInfo *table_info, dberr_t &status) {
   if(ast->type_ == kNodeConditions) {
-    return CheckExpression(ast->child_, row, table_info);
+    return CheckExpression(ast->child_, row, table_info, status);
   } else if(ast->type_ == kNodeConnector)  {
     auto pos = ast->child_;
     string connector = ast->val_;
     if(connector == "and") {
       while(pos != nullptr) {
-        if(!CheckExpression(pos, row, table_info))  return false;
+        if(!CheckExpression(pos, row, table_info, status))  return false;
         pos = pos->next_;
       }
       return true;
     } else if(connector == "or") {
       while(pos != nullptr) {
-        if(CheckExpression(pos, row, table_info)) return true;
+        if(CheckExpression(pos, row, table_info, status)) return true;
         pos = pos->next_;
       }
       return false;
@@ -776,5 +777,6 @@ bool ExecuteEngine::CheckExpression(pSyntaxNode ast, const Row &row, TableInfo *
     else if(comparator == "<>") return field->CompareNotEquals(temp);
   }
   *message_ += "Error: Illegal expression!\n";
+  status = DB_FAILED;
   return false;
 }

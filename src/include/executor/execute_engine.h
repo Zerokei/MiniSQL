@@ -36,7 +36,7 @@ public:
  ExecuteEngine();
 
  ~ExecuteEngine() {
-   for (auto it : dbs_) {
+   for(auto it : dbs_) {
      delete it.second;
    }
   }
@@ -87,7 +87,7 @@ private:
 
   dberr_t GetRows(const pSyntaxNode ast, TableInfo* tinfo, vector<IndexInfo*> iinfos, vector<Row>* row);
   
-  bool CheckExpression(pSyntaxNode ast, const Row &row, TableInfo *table_info);
+  bool CheckExpression(pSyntaxNode ast, const Row &row, TableInfo *table_info, dberr_t &status);
 
  private:
   unordered_map<string, DBStorageEngine *> dbs_;  /** all opened databases */
