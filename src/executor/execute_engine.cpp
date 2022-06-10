@@ -251,6 +251,7 @@ dberr_t ExecuteEngine::ExecuteDropTable(pSyntaxNode ast, ExecuteContext *context
     *message_ += "Error: Table " + table_name + " does not exist!\n";
     return DB_FAILED;
   }
+  // signal(0);
   return dbs_[current_db_]->catalog_mgr_->DropTable(table_name);
 }
 dberr_t ExecuteEngine::ExecuteShowIndexes(pSyntaxNode ast, ExecuteContext *context) {
@@ -278,6 +279,43 @@ dberr_t ExecuteEngine::ExecuteCreateIndex(pSyntaxNode ast, ExecuteContext *conte
 #ifdef ENABLE_EXECUTE_DEBUG
   LOG(INFO) << "ExecuteCreateIndex" << std::endl;
 #endif
+  if(current_db_ == "") {
+    *message_ += "Error: No database being used!\n";
+    return DB_FAILED;
+  }
+  string table_name = ast->child_->next_->val_;
+  string index_name = ast->child_->val_;
+  vector<string> index_keys;
+  auto pos = ast->child_->next_->next_->child_;
+  while(pos != nullptr) {
+    index_keys.push_back(pos->val_);
+    pos = pos->next_;
+  }
+  IndexInfo *index_info;
+  dberr_t status = dbs_[current_db_]->catalog_mgr_->CreateIndex(table_name, index_name, index_keys, nullptr, index_info);
+  if(status == DB_TABLE_NOT_EXIST) {
+    *message_ += "Error: Table " + table_name + " does not exist!\n";
+    return DB_FAILED;
+  } else if(status == DB_INDEX_ALREADY_EXIST) {
+    *message_ += "Error: Index " + index_name + " already exists!\n";
+    return DB_FAILED;
+  }
+  TableInfo *table_info;
+  dbs_[current_db_]->catalog_mgr_->GetTable(table_name, table_info);
+  TableHeap *table_heap = table_info->GetTableHeap();
+  for(auto it = table_heap->Begin(); it != table_heap->End(); it++) {
+    Row row = *it;
+    vector<Field> fields;
+    for(uint32_t i = 0; i < index_info->GetIndexKeySchema()->GetColumnCount(); i++) {
+      fields.push_back(*row.GetField(index_info->GetIndexKeySchema()->GetColumn(i)->GetTableInd()));
+    }
+    Row key(fields);
+    if(index_info->GetIndex()->InsertEntry(key, row.GetRowId(), nullptr) != DB_SUCCESS) {
+      *message_ += "Error: Creating Index " + index_name + "will cause duplicate tuples!\n";
+      dbs_[current_db_]->catalog_mgr_->DropIndex(table_name, index_name);
+      return DB_FAILED;
+    }
+  }
   return DB_SUCCESS;
 }
 
@@ -285,8 +323,18 @@ dberr_t ExecuteEngine::ExecuteDropIndex(pSyntaxNode ast, ExecuteContext *context
 #ifdef ENABLE_EXECUTE_DEBUG
   LOG(INFO) << "ExecuteDropIndex" << std::endl;
 #endif
+  if(current_db_ == "") {
+    *message_ += "Error: No database being used!\n";
+    return DB_FAILED;
+  }
+  string index_name = ast->child_->val_;
+  vector<TableInfo *> table_infos;
+  dbs_[current_db_]->catalog_mgr_->GetTables(table_infos);
+  for(auto table_info: table_infos) 
+    dbs_[current_db_]->catalog_mgr_->DropIndex(table_info->GetTableName(), index_name);
   return DB_SUCCESS;
 }
+
 dberr_t ExecuteEngine::ExecuteSelect(pSyntaxNode ast, ExecuteContext *context) {
 #ifdef ENABLE_EXECUTE_DEBUG
   LOG(INFO) << "ExecuteSelect" << std::endl;
@@ -693,7 +741,7 @@ dberr_t ExecuteEngine::GetRows(const pSyntaxNode ast, TableInfo *table_info,vect
 
 bool ExecuteEngine::CheckExpression(pSyntaxNode ast, const Row &row, TableInfo *table_info) {
   if(ast->type_ == kNodeConditions) {
-      return CheckExpression(ast->child_, row, table_info);
+    return CheckExpression(ast->child_, row, table_info);
   } else if(ast->type_ == kNodeConnector)  {
     auto pos = ast->child_;
     string connector = ast->val_;

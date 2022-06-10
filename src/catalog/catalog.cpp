@@ -125,11 +125,9 @@ dberr_t CatalogManager::CreateTable(const string &table_name, TableSchema *schem
   table_id_t table_id=catalog_meta_->GetNextTableId()+1;
   page_id_t page_id=0;
   Page* page1=buffer_pool_manager_->NewPage(page_id);
-
   catalog_meta_->GetTableMetaPages()->insert(make_pair(table_id,page_id));
   page_id_t root_page_id=0;
   buffer_pool_manager_->NewPage(root_page_id);
-  // cerr << root_page_id << endl;
   TableSchema *new_schema=Schema::DeepCopySchema(schema,heap_);
   TableMetadata *TableMeta=TableMetadata::Create(table_id, table_name, root_page_id, new_schema, heap_);
   TableHeap * table_heap=TableHeap::Create(buffer_pool_manager_,root_page_id,new_schema,log_manager_,lock_manager_,heap_);
@@ -253,7 +251,7 @@ dberr_t CatalogManager::DropTable(const string &table_name) {
   table_id_t table_id=itr->second;
   auto itr1=catalog_meta_->GetTableMetaPages()->find(table_id);
   page_id_t page_id=itr1->second;
-  auto itr2=tables_.find(page_id);  
+  auto itr2=tables_.find(table_id);  
   TableInfo *table_info=itr2->second;
   std::vector<IndexInfo *> indexes;
   dberr_t Err0=GetTableIndexes(table_name, indexes);
@@ -276,6 +274,7 @@ dberr_t CatalogManager::DropTable(const string &table_name) {
   Page *page0=buffer_pool_manager_->FetchPage(CATALOG_META_PAGE_ID);
   catalog_meta_->SerializeTo(page0->GetData());
   buffer_pool_manager_->UnpinPage(CATALOG_META_PAGE_ID, true);
+  
   return DB_SUCCESS;
 }
 
@@ -301,6 +300,7 @@ dberr_t CatalogManager::DropIndex(const string &table_name, const string &index_
   index_names_.insert(make_pair(table_name,Map));
   buffer_pool_manager_->UnpinPage(page_id,true);
   buffer_pool_manager_->DeletePage(page_id);
+  index_info->GetIndex()->Destroy();
   delete(index_info);
   Page *page0=buffer_pool_manager_->FetchPage(CATALOG_META_PAGE_ID);
   catalog_meta_->SerializeTo(page0->GetData());

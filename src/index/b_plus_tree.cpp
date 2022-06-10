@@ -30,6 +30,7 @@ bool BPLUSTREE_TYPE::IsEmpty() const {
 
 INDEX_TEMPLATE_ARGUMENTS
 void BPLUSTREE_TYPE::Destroy() {
+  // cerr << " -- " << endl;
   if(IsEmpty()) return ;
   auto root_tree_page = reinterpret_cast<BPlusTreePage *>(buffer_pool_manager_->FetchPage(root_page_id_)->GetData());
   DestroyDown(root_tree_page);
@@ -388,6 +389,8 @@ KeyType BPLUSTREE_TYPE::RemoveDown(BPlusTreePage *cur_tree_page, const KeyType &
       left_leaf->IncreaseSize(-1);
       cur_data[tar_page_index].first = right_leaf->GetData()[0].first;
     }
+    buffer_pool_manager_->UnpinPage(left_page->GetPageId(), true);
+    buffer_pool_manager_->UnpinPage(right_page->GetPageId(), true);
   } else {
     auto left_page = buffer_pool_manager_->FetchPage(cur_internal_page->GetData()[tar_page_index].second);
     auto left_tree_page = reinterpret_cast<BPlusTreePage *>(left_page->GetData());
@@ -410,6 +413,8 @@ KeyType BPLUSTREE_TYPE::RemoveDown(BPlusTreePage *cur_tree_page, const KeyType &
       for(int i = 0; i < right_leaf->GetSize(); ++i) right_leaf->GetData()[i] = right_leaf->GetData()[i + 1];
       cur_data[tar_page_index + 1].first = right_leaf->GetData()[0].first;
     }
+    buffer_pool_manager_->UnpinPage(left_page->GetPageId(), true);
+    buffer_pool_manager_->UnpinPage(right_page->GetPageId(), true);
   }
   return cur_data[0].first;
 }

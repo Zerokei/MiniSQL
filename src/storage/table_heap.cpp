@@ -117,6 +117,7 @@ void TableHeap::RollbackDelete(const RowId &rid, Transaction *txn) {
 void TableHeap::FreeHeap() {
   if(first_page_id_==0)return;
   auto page=reinterpret_cast<TablePage *>(buffer_pool_manager_->FetchPage(first_page_id_));
+  buffer_pool_manager_->UnpinPage(first_page_id_,true);
   while(true){
     auto nxtpage=reinterpret_cast<TablePage *>(buffer_pool_manager_->FetchPage(page->GetNextPageId()));
     bool flag=true;
