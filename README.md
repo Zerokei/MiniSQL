@@ -1,4 +1,4 @@
-# MiniSQL :Chicken:
+# MiniSQL :chicken:
 A simple sql server written in C++.
 
 
