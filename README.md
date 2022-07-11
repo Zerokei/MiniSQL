@@ -1,4 +1,4 @@
-# MiniSQL
+# MiniSQL :Chicken:
 A simple sql server written in C++.
 
 
@@ -22,5 +22,6 @@ Distributed under the MIT License. See LICENSE.txt for more information.
 - [kaslary|Green Part](https://github.com/kaslary)
 - [Zerokei|Blue Part](https://github.com/Zerokei)
 <div align=center><img width="400" height="300" src="https://zerokei-imgurl.oss-cn-hangzhou.aliyuncs.com/img/20220711112251.png"/></div>
+
 ## Acknowledgments
 - [Ying Chengjun](https://www.yuque.com/yingchengjun): The TA of Database System course, who modified the CMU-15445 BusTub framework.
