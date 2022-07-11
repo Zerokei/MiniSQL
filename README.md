@@ -12,7 +12,7 @@ $
 ## License
 Distributed under the MIT License. See LICENSE.txt for more information.
 
-## Contributor
+## Contributors
 - [EdenCY|Yellow Part](https://github.com/EdenCY)
 - [kaslary|Green Part](https://github.com/kaslary)
 - [Zerokei|Blue Part](https://github.com/Zerokei)
