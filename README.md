@@ -6,7 +6,12 @@ A simple sql server written in C++.
 ```bash
 $ git clone https://github.com/Zerokei/minisql.git
 $ cd minisql
-$ 
+$ mkdir build && cd build
+$ cmake -DCMAKE_BUILD_TYPE=Release ..
+$ make -j
+$ cd bin
+$ ./main
+> minisql
 ```
 
 ## License
